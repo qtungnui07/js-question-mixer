@@ -1,5 +1,6 @@
 name: Build Convert Tool
-
+permissions:
+  contents: write
 on:
   push:
     tags:
