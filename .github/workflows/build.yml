@@ -32,12 +32,27 @@ jobs:
       - name: Prepare files
         run: |
           copy dist\convert.exe convert.exe
-
+      
           echo @echo off > setup.bat
-          echo echo Installing convert tool... >> setup.bat
-          echo mkdir C:\tools 2^>nul >> setup.bat
-          echo copy convert.exe C:\tools >> setup.bat
-          echo echo Done. Add C:\tools to PATH if needed. >> setup.bat
+          echo setlocal >> setup.bat
+          echo if not exist "C:\tools" ( >> setup.bat
+          echo     mkdir "C:\tools" >> setup.bat
+          echo ) else ( >> setup.bat
+          echo     echo C:\tools already exists >> setup.bat
+          echo ) >> setup.bat
+          echo if exist "%%~dp0convert.exe" ( >> setup.bat
+          echo     move /y "%%~dp0convert.exe" "C:\tools\convert.exe" >> setup.bat
+          echo ) else ( >> setup.bat
+          echo     echo convert.exe not found >> setup.bat
+          echo ) >> setup.bat
+          echo echo %%PATH%% ^| find /i "C:\tools" ^>nul >> setup.bat
+          echo if errorlevel 1 ( >> setup.bat
+          echo     setx PATH "%%PATH%%;C:\tools" >> setup.bat
+          echo     echo Added C:\tools to PATH >> setup.bat
+          echo ) else ( >> setup.bat
+          echo     echo PATH already contains C:\tools >> setup.bat
+          echo ) >> setup.bat
+          echo echo Done >> setup.bat
           echo pause >> setup.bat
 
       - name: Create ZIP
