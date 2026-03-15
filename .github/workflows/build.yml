@@ -28,11 +28,11 @@ jobs:
 
       - name: Build exe
         run: |
-          pyinstaller --onefile convert.py
+          pyinstaller --onefile jstodocx.py
 
       - name: Prepare files
         run: |
-          copy dist\convert.exe convert.exe
+          copy dist\jstodocx.exe jstodocx.exe
 
           @"
           @echo off
@@ -42,10 +42,10 @@ jobs:
           ) else (
               echo C:\tools already exists
           )
-          if exist "%~dp0convert.exe" (
-              move /y "%~dp0convert.exe" "C:\tools\convert.exe"
+          if exist "%~jstodocx.exe" (
+              move /y "%~jstodocx.exe" "C:\tools\jstodocx.exe"
           ) else (
-              echo convert.exe not found
+              echo jstodocx.exe not found
           )
           echo %PATH% | find /i "C:\tools" >nul
           if errorlevel 1 (
@@ -60,17 +60,17 @@ jobs:
 
       - name: Create ZIP
         run: |
-          powershell Compress-Archive convert.exe,setup.bat convert-tool.zip
+          powershell Compress-Archive jstodocx.exe,setup.bat jstodocx-tool.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: convert-tool
-          path: convert-tool.zip
+          name: jstodocx-tool
+          path: jstodocx-tool.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: convert-tool.zip
+          files: jstodocx-tool.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
