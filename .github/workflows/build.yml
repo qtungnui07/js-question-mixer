@@ -1,46 +1,57 @@
 name: Build Convert Tool
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           pip install pyinstaller
           pip install -r requirements.txt
 
-      - name: Build exe
+      - name: Build EXE
         run: |
           pyinstaller --onefile convert.py
 
-      - name: Prepare release files
+      - name: Prepare files
         run: |
           copy dist\convert.exe convert.exe
+
           echo @echo off > setup.bat
           echo echo Installing convert tool... >> setup.bat
           echo mkdir C:\tools 2^>nul >> setup.bat
           echo copy convert.exe C:\tools >> setup.bat
-          echo echo Add C:\tools to PATH if needed. >> setup.bat
+          echo echo Done. Add C:\tools to PATH if needed. >> setup.bat
           echo pause >> setup.bat
 
-      - name: Zip package
+      - name: Create ZIP
         run: |
           powershell Compress-Archive convert.exe,setup.bat convert-tool.zip
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: convert-tool
           path: convert-tool.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: convert-tool.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
