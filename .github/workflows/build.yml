@@ -1,6 +1,8 @@
 name: Build Convert Tool
+
 permissions:
   contents: write
+
 on:
   push:
     tags:
@@ -22,38 +24,39 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyinstaller
-          pip install -r requirements.txt
+          pip install pyinstaller python-docx
 
-      - name: Build EXE
+      - name: Build exe
         run: |
           pyinstaller --onefile convert.py
 
       - name: Prepare files
         run: |
           copy dist\convert.exe convert.exe
-      
-          echo @echo off > setup.bat
-          echo setlocal >> setup.bat
-          echo if not exist "C:\tools" ( >> setup.bat
-          echo     mkdir "C:\tools" >> setup.bat
-          echo ) else ( >> setup.bat
-          echo     echo C:\tools already exists >> setup.bat
-          echo ) >> setup.bat
-          echo if exist "%%~dp0convert.exe" ( >> setup.bat
-          echo     move /y "%%~dp0convert.exe" "C:\tools\convert.exe" >> setup.bat
-          echo ) else ( >> setup.bat
-          echo     echo convert.exe not found >> setup.bat
-          echo ) >> setup.bat
-          echo echo %%PATH%% ^| find /i "C:\tools" ^>nul >> setup.bat
-          echo if errorlevel 1 ( >> setup.bat
-          echo     setx PATH "%%PATH%%;C:\tools" >> setup.bat
-          echo     echo Added C:\tools to PATH >> setup.bat
-          echo ) else ( >> setup.bat
-          echo     echo PATH already contains C:\tools >> setup.bat
-          echo ) >> setup.bat
-          echo echo Done >> setup.bat
-          echo pause >> setup.bat
+
+          @"
+          @echo off
+          setlocal
+          if not exist "C:\tools" (
+              mkdir "C:\tools"
+          ) else (
+              echo C:\tools already exists
+          )
+          if exist "%~dp0convert.exe" (
+              move /y "%~dp0convert.exe" "C:\tools\convert.exe"
+          ) else (
+              echo convert.exe not found
+          )
+          echo %PATH% | find /i "C:\tools" >nul
+          if errorlevel 1 (
+              setx PATH "%PATH%;C:\tools"
+              echo Added C:\tools to PATH
+          ) else (
+              echo PATH already contains C:\tools
+          )
+          echo Done
+          pause
+          "@ | Out-File -Encoding ASCII setup.bat
 
       - name: Create ZIP
         run: |
@@ -65,7 +68,7 @@ jobs:
           name: convert-tool
           path: convert-tool.zip
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: convert-tool.zip
